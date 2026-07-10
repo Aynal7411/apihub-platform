@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    #third party apps
+    "drf_spectacular",
      "rest_framework",
       #local apps
     "apps.accounts",
@@ -56,6 +57,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+AUTH_USER_MODEL = "accounts.User"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -70,6 +73,22 @@ TEMPLATES = [
         },
     },
 ]
+
+
+REST_FRAMEWORK = {
+
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+
+    "DEFAULT_SCHEMA_CLASS":
+        "drf_spectacular.openapi.AutoSchema",
+}
+
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
@@ -107,6 +126,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+from datetime import timedelta
+
+SIMPLE_JWT = {
+
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+
+    "ROTATE_REFRESH_TOKENS": True,
+
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    "UPDATE_LAST_LOGIN": True,
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -124,7 +157,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
