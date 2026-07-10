@@ -3,12 +3,13 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-
+*.pyc
 # Virtual Environment
 backend/myenv/
 backend/venv/
 .venv/
 venv/
+.env/
 
 # Environment Variables
 .env
