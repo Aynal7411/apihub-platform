@@ -1,5 +1,6 @@
 from rest_framework.exceptions import APIException
-
+from rest_framework import status
+from rest_framework.response import Response
 
 class APIHubException(Exception):
     """
@@ -35,10 +36,13 @@ def custom_exception_handler(exc, context):
 
     # DRF authentication failure
     if isinstance(exc, AuthenticationFailed):
-        return _build_auth_error_response(
-            response=response,
-            code="authentication_failed",
-            message="Authentication failed.",
+        return Response(
+            {
+                "success": False,
+                "message": str(exc.detail),
+                "data": None,
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
         )
 
     # Missing authentication credentials

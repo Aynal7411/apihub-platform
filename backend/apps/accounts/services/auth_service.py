@@ -54,7 +54,7 @@ class AuthService:
 
 
     @staticmethod
-    def login(email, password):
+    def login(*,email, password):
         """
         Authenticate user and generate JWT tokens.
         """
@@ -67,7 +67,7 @@ class AuthService:
         )
 
         if user is None:
-           raise InvalidCredentials()
+           raise AuthenticationFailed( "Invalid email or password.")
 
         if not user.is_active:
             raise AuthenticationFailed(
