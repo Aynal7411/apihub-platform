@@ -10,7 +10,7 @@ class AuthService:
     @transaction.atomic
     def register_user(validated_data):
 
-        validated_data.pop("password_confirm")
+        
 
         password = validated_data.pop("password")
 

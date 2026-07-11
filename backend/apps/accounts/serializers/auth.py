@@ -1,19 +1,32 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from django.core.validators import RegexValidator
 
 User = get_user_model()
 
 
 class RegistrationSerializer(serializers.Serializer):
 
-    email = serializers.EmailField()
+    email = serializers.EmailField(
+        help_text="User email address."
+    )
 
-    username = serializers.CharField(max_length=150)
+    username = serializers.CharField(max_length=150,
+             help_text="Unique username." ,
+             validators=[
+            RegexValidator(
+            regex=r"^[A-Za-z0-9_]+$",
+            message="Only letters, numbers and underscore are allowed."
+        )
+    ]
+             
+             )                       
 
     password = serializers.CharField(
         write_only=True,
         min_length=8,
+        trim_whitespace=False,
     )
 
     password_confirm = serializers.CharField(
@@ -39,8 +52,7 @@ class RegistrationSerializer(serializers.Serializer):
 
         return email
     def validate_username(self, value):
-
-        username = value.strip()
+        username = value.strip().lower()
         if User.objects.filter(username__iexact=username).exists():
             raise serializers.ValidationError(
                 "Username already exists."
@@ -59,5 +71,5 @@ class RegistrationSerializer(serializers.Serializer):
             )
 
         validate_password(attrs["password"])
-
+        attrs.pop("password_confirm")
         return attrs
