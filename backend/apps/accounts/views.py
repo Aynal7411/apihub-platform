@@ -6,7 +6,10 @@ from .services.auth_service import AuthService
 from .serializers.auth import RegistrationSerializer
 from .services.auth_service import AuthService
 from apps.common.utils import success_response
+from.serializers.auth import UserSerializer
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
+from .serializers.auth import RefreshTokenSerializer
 
 class RegistrationAPIView(GenericAPIView):
 
@@ -77,3 +80,41 @@ class LoginAPIView(GenericAPIView):
             },
             status_code=status.HTTP_200_OK,
         )
+    
+
+
+class RefreshTokenAPIView(GenericAPIView):
+
+        serializer_class = RefreshTokenSerializer
+        permission_classes = [AllowAny]
+        authentication_classes = []
+
+        def post(self, request, *args, **kwargs):
+
+            serializer = self.get_serializer(
+            data=request.data
+        )
+
+            serializer.is_valid(
+            raise_exception=True
+        )
+
+            return success_response(
+              message="Access token refreshed successfully.",
+              data=serializer.validated_data,
+              status_code=status.HTTP_200_OK,
+        )
+
+from rest_framework.generics import RetrieveAPIView
+
+class CurrentUserAPIView(GenericAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(request.user)
+
+        return success_response(
+            message="Current user retrieved successfully.",
+            data=serializer.data,
+        )    

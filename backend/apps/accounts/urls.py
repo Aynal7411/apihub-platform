@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import RegistrationAPIView, LoginAPIView
+from .views import RegistrationAPIView, LoginAPIView, RefreshTokenAPIView, CurrentUserAPIView
 app_name = "accounts"
 
 urlpatterns = [
@@ -15,6 +15,18 @@ urlpatterns = [
         "auth/login/",
         LoginAPIView.as_view(),
         name="login",
+    ),
+
+    path(
+        "auth/token/refresh/",
+        RefreshTokenAPIView.as_view(),
+        name="token-refresh",
+    ),
+
+     path(
+        "auth/me/",
+        CurrentUserAPIView.as_view(),
+        name="me",
     ),
 
 ]

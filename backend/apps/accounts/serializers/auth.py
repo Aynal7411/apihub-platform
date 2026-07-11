@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model,aauthenticate
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from django.core.validators import RegexValidator
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -95,3 +97,43 @@ class LoginSerializer(serializers.Serializer):
             )
 
         return attrs
+    
+
+class RefreshTokenSerializer(serializers.Serializer):
+       refresh = serializers.CharField(
+        write_only=True
+    )
+
+       def validate(self, attrs):
+        refresh_token = attrs["refresh"]
+
+        try:
+            token = RefreshToken(refresh_token)
+        except TokenError:
+            raise serializers.ValidationError(
+                {
+                    "refresh":
+                        "Invalid or expired refresh token."
+                }
+            )
+
+        return {
+            "access": str(token.access_token)
+        }
+       
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "username",
+            "first_name",
+            "last_name",
+            "is_active",
+            
+        )
+
+        read_only_fields = fields   
