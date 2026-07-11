@@ -4,6 +4,7 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import AuthenticationFailed
 
 User = get_user_model()
 
@@ -99,27 +100,44 @@ class LoginSerializer(serializers.Serializer):
         return attrs
     
 
+
+from rest_framework import serializers, status
+from rest_framework.exceptions import APIException
+
+class InvalidRefreshToken(APIException):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    default_detail = "Invalid, expired, or blacklisted refresh token."
+    default_code = "invalid_refresh_token"
+   
+
 class RefreshTokenSerializer(serializers.Serializer):
-       refresh = serializers.CharField(
-        write_only=True
-    )
+    refresh = serializers.CharField(write_only=True)
 
-       def validate(self, attrs):
-        refresh_token = attrs["refresh"]
-
+    def validate(self, attrs):
         try:
-            token = RefreshToken(refresh_token)
-        except TokenError:
-            raise serializers.ValidationError(
-                {
-                    "refresh":
-                        "Invalid or expired refresh token."
-                }
-            )
+            old_refresh = RefreshToken(attrs["refresh"])
 
-        return {
-            "access": str(token.access_token)
-        }
+            user_id = old_refresh["user_id"]
+
+            try:
+                user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                raise InvalidRefreshToken(
+                    "User associated with this token does not exist."
+                )
+
+            access_token = str(old_refresh.access_token)
+            new_refresh = RefreshToken.for_user(user)
+
+            old_refresh.blacklist()
+
+            return {
+                "access": access_token,
+                "refresh": str(new_refresh),
+            }
+
+        except TokenError as exc:
+            raise InvalidRefreshToken() from exc
        
 
 class UserSerializer(serializers.ModelSerializer):
@@ -137,3 +155,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = fields   
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()       

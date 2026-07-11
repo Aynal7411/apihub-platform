@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     #third party apps
+     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
      "rest_framework",
       #local apps
@@ -54,6 +55,14 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
+#security settings
+#SECURE_SSL_REDIRECT = False
+
+#SESSION_COOKIE_SECURE = False
+
+#CSRF_COOKIE_SECURE = False
 
 ROOT_URLCONF = 'config.urls'
 
@@ -129,16 +138,39 @@ AUTH_PASSWORD_VALIDATORS = [
 from datetime import timedelta
 
 SIMPLE_JWT = {
-
+    # Token lifetime
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 
+    # Refresh token security
     "ROTATE_REFRESH_TOKENS": True,
-
     "BLACKLIST_AFTER_ROTATION": True,
 
-    "UPDATE_LAST_LOGIN": True,
+    # JWT algorithm
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": "",
+
+    # Authorization header
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+
+    # User identification
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+
+    # Token classes
+    "AUTH_TOKEN_CLASSES": (
+        "rest_framework_simplejwt.tokens.AccessToken",
+    ),
+
+    # Token claims
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+
+    # Security
+    "LEEWAY": 0,
+    "UPDATE_LAST_LOGIN": False,
 }
 
 # Internationalization

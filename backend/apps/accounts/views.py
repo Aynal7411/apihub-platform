@@ -10,11 +10,13 @@ from.serializers.auth import UserSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from .serializers.auth import RefreshTokenSerializer
+from apps.accounts.serializers.auth import LogoutSerializer
+from rest_framework.views import APIView
 
 class RegistrationAPIView(GenericAPIView):
 
     serializer_class = RegistrationSerializer
-    permission_classes = []
+    permission_classes = [AllowAny]
 
     authentication_classes = []
 
@@ -82,27 +84,19 @@ class LoginAPIView(GenericAPIView):
         )
     
 
-
 class RefreshTokenAPIView(GenericAPIView):
+    serializer_class = RefreshTokenSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-        serializer_class = RefreshTokenSerializer
-        permission_classes = [AllowAny]
-        authentication_classes = []
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        def post(self, request, *args, **kwargs):
-
-            serializer = self.get_serializer(
-            data=request.data
-        )
-
-            serializer.is_valid(
-            raise_exception=True
-        )
-
-            return success_response(
-              message="Access token refreshed successfully.",
-              data=serializer.validated_data,
-              status_code=status.HTTP_200_OK,
+        return success_response(
+            message="Access token refreshed successfully.",
+            data=serializer.validated_data,
+            status_code=status.HTTP_200_OK,
         )
 
 from rest_framework.generics import RetrieveAPIView
@@ -118,3 +112,27 @@ class CurrentUserAPIView(GenericAPIView):
             message="Current user retrieved successfully.",
             data=serializer.data,
         )    
+
+
+class LogoutAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = LogoutSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        AuthService.logout(
+            serializer.validated_data["refresh"]
+        )
+
+        return success_response(
+            message="Logout successful.",
+            data=None,
+            status_code=status.HTTP_200_OK,
+        )      
