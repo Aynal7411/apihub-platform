@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model,aauthenticate
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from django.core.validators import RegexValidator
@@ -72,4 +72,26 @@ class RegistrationSerializer(serializers.Serializer):
 
         validate_password(attrs["password"])
         attrs.pop("password_confirm")
+        return attrs
+
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+    )
+
+    def validate(self, attrs):
+        if not attrs.get("email"):
+            raise serializers.ValidationError(
+                {"email": "Email is required."}
+            )
+
+        if not attrs.get("password"):
+            raise serializers.ValidationError(
+                {"password": "Password is required."}
+            )
+
         return attrs

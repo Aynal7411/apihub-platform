@@ -8,7 +8,7 @@ from apps.accounts.models import User
 class RegistrationAPITest(APITestCase):
 
     def setUp(self):
-        self.url = reverse("register")
+        self.url = reverse("accounts:register")
 
         self.payload = {
             "email": "john@example.com",
