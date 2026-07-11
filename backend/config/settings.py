@@ -100,6 +100,10 @@ REST_FRAMEWORK = {
      "EXCEPTION_HANDLER": (
         "apps.common.exceptions.custom_exception_handler"
     ),   
+
+   "DEFAULT_AUTHENTICATION_CLASSES": (
+        "apps.accounts.authentication.ActiveUserJWTAuthentication",
+    ),
 }
 
 
