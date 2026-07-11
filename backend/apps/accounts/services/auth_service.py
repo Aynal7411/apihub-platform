@@ -5,6 +5,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 from apps.common.exceptions import InvalidCredentials
 from rest_framework_simplejwt.exceptions import TokenError
+from apps.accounts.services.token_service import TokenService
 
 User = get_user_model()
 
@@ -75,11 +76,13 @@ class AuthService:
 
         refresh = RefreshToken.for_user(user)
 
+        tokens = TokenService.create_tokens_for_user(user)
+
         return {
-            "user": user,
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-        }
+         "user": user,
+        "refresh": tokens["refresh"],
+         "access": tokens["access"],
+}
     
     @staticmethod
     def logout(refresh_token):
