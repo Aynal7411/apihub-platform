@@ -12,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers.auth import RefreshTokenSerializer
 from apps.accounts.serializers.auth import LogoutSerializer
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class RegistrationAPIView(GenericAPIView):
 
@@ -104,7 +105,7 @@ from rest_framework.generics import RetrieveAPIView
 class CurrentUserAPIView(GenericAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
-
+    authentication_classes = [JWTAuthentication]
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(request.user)
 
@@ -115,17 +116,18 @@ class CurrentUserAPIView(GenericAPIView):
 
 
 class LogoutAPIView(APIView):
-
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = LogoutSerializer(
-            data=request.data
-        )
+        print(request.user)
+        print(request.auth)
+        serializer = LogoutSerializer(data=request.data)
+        print(request.data)
+        serializer.is_valid(raise_exception=True)
 
-        serializer.is_valid(
-            raise_exception=True
-        )
+        refresh = serializer.validated_data["refresh"]
+
 
         AuthService.logout(
             serializer.validated_data["refresh"]
