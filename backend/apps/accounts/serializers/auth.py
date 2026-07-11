@@ -31,13 +31,22 @@ class RegistrationSerializer(serializers.Serializer):
     )
 
     def validate_email(self, value):
-
-        if User.objects.filter(email=value).exists():
+        email = value.strip().lower()
+        if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
                 "Email already exists."
             )
 
-        return value
+        return email
+    def validate_username(self, value):
+
+        username = value.strip()
+        if User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError(
+                "Username already exists."
+            )
+
+        return username
 
     def validate(self, attrs):
 

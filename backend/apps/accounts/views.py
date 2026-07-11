@@ -29,14 +29,11 @@ class RegistrationAPIView(GenericAPIView):
         )
 
         return success_response(
-            {
-                
-                "message": "Registration successful.",
-                "data": {
-                    "id": str(user.id),
-                    "email": user.email,
-                    "username": user.username,
-                },
-            },
-            status_code=status.HTTP_201_CREATED,
+         message="Registration successful.",
+         data={
+          "id": str(user.id),
+          "email": user.email,
+          "username": user.username,
+           },
+        status_code=status.HTTP_201_CREATED,
         )
