@@ -6,6 +6,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.common.exceptions import InvalidCredentials
 from rest_framework_simplejwt.exceptions import TokenError
 from apps.accounts.services.token_service import TokenService
+from rest_framework_simplejwt.token_blacklist.models import (
+    OutstandingToken,
+    BlacklistedToken,
+)
 
 User = get_user_model()
 
@@ -94,3 +98,30 @@ class AuthService:
             raise AuthenticationFailed(
                 "Invalid or expired refresh token."
             )
+        
+    @staticmethod
+    @transaction.atomic
+    def logout_all(user):
+        """
+        Revoke all outstanding refresh-token sessions
+        belonging to the specified user.
+
+        Idempotent:
+        already-blacklisted tokens are not duplicated.
+        """
+
+        outstanding_tokens = OutstandingToken.objects.filter(
+            user=user
+        )
+
+        revoked_sessions = 0
+
+        for token in outstanding_tokens:
+            _, created = BlacklistedToken.objects.get_or_create(
+                token=token
+            )
+
+            if created:
+                revoked_sessions += 1
+
+        return revoked_sessions  

@@ -138,3 +138,21 @@ class LogoutAPIView(APIView):
             data=None,
             status_code=status.HTTP_200_OK,
         )      
+    
+
+class LogoutAllAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+        revoked_sessions = AuthService.logout_all(
+            user=request.user
+        )
+
+        return success_response(
+            message="Logged out from all devices successfully.",
+            data={
+                "revoked_sessions": revoked_sessions,
+            },
+            status_code=status.HTTP_200_OK,
+        )

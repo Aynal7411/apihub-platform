@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import RegistrationAPIView, LoginAPIView, RefreshTokenAPIView, CurrentUserAPIView,LogoutAPIView
+from .views import ( RegistrationAPIView, LoginAPIView, RefreshTokenAPIView, CurrentUserAPIView,LogoutAPIView,
+       LogoutAllAPIView,)
 app_name = "accounts"
 
 urlpatterns = [
@@ -32,6 +33,13 @@ urlpatterns = [
     "auth/logout/",
     LogoutAPIView.as_view(),
     name="logout",
-)
+),
+   path(
+        "auth/logout-all/",
+        LogoutAllAPIView.as_view(),
+        name="logout-all",
+    ),
+
+  
 
 ]
