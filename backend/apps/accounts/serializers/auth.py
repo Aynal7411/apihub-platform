@@ -159,3 +159,32 @@ class UserSerializer(serializers.ModelSerializer):
 
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()       
+
+class VerifyEmailSerializer(serializers.Serializer):
+    token = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        trim_whitespace=True,
+        write_only=True,
+    )
+
+    def validate_token(self, value):
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                "Email verification token is required."
+            )
+
+        return value   
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    """
+    No email field is accepted intentionally.
+
+    The authenticated user is taken from request.user.
+    This prevents email enumeration attacks.
+    """
+
+    pass       

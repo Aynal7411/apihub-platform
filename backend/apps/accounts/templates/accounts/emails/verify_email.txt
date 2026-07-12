@@ -1,0 +1,14 @@
+Hello {{ user.first_name|default:user.username }},
+
+Thank you for creating your account.
+
+Please verify your email address by opening the following link:
+
+{{ verification_url }}
+
+This verification link will expire in {{ expiry_minutes }} minutes.
+
+If you did not create this account, you can safely ignore this email.
+
+Regards,
+API Hub Team

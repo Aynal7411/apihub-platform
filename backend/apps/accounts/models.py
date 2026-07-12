@@ -1,9 +1,9 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
-
+import uuid
 from apps.common.models import BaseModel
 from .managers import UserManager
-
+from django.conf import settings
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     """
@@ -56,6 +56,15 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     is_verified = models.BooleanField(
         default=False,
     )
+    is_email_verified = models.BooleanField(
+        default=False,
+        db_index=True,
+    )
+
+    email_verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
 
     objects = UserManager()
 
@@ -78,3 +87,44 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         Return the user's full name.
         """
         return f"{self.first_name} {self.last_name}".strip()
+    
+
+class EmailVerificationToken(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="email_verification_tokens",
+    )
+
+    token_hash = models.CharField(
+        max_length=64,
+        unique=True,
+        db_index=True,
+    )
+
+    expires_at = models.DateTimeField()
+
+    used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Email verification token for {self.user.email}"
+
+    @property
+    def is_used(self):
+        return self.used_at is not None        

@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import ( RegistrationAPIView, LoginAPIView, RefreshTokenAPIView, CurrentUserAPIView,LogoutAPIView,
-       LogoutAllAPIView,SessionListAPIView,  SessionRevokeAPIView,)
+       LogoutAllAPIView,SessionListAPIView,  SessionRevokeAPIView,VerifyEmailAPIView,ResendVerificationAPIView,)
                                           
 app_name = "accounts"
 
@@ -52,6 +52,18 @@ urlpatterns = [
     SessionRevokeAPIView.as_view(),
     name="session-revoke",
 ),
-  
+
+   path(
+    "auth/email/verify/",
+    VerifyEmailAPIView.as_view(),
+    name="verify-email",
+),
+
+
+  path(
+    "auth/email/verification/resend/",
+    ResendVerificationAPIView.as_view(),
+    name="resend-email-verification",
+),
 
 ]

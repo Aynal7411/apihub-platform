@@ -8,14 +8,25 @@ from .services.auth_service import AuthService
 from apps.common.utils import success_response
 from.serializers.auth import UserSerializer
 from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from .serializers.auth import RefreshTokenSerializer
 from apps.accounts.serializers.auth import LogoutSerializer
+from apps.accounts.serializers.auth import VerifyEmailSerializer
+from apps.accounts.serializers.auth import (
+    ResendVerificationSerializer,
+)
+from apps.accounts.services.verification_email_service import (
+    VerificationEmailService,
+)
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
     BlacklistedToken,
+)
+from apps.accounts.services.email_verification_service import (
+    EmailVerificationService,
 )
 
 class RegistrationAPIView(GenericAPIView):
@@ -39,7 +50,9 @@ class RegistrationAPIView(GenericAPIView):
         user = AuthService.register_user(
             serializer.validated_data
         )
-
+        VerificationEmailService.send_verification_email(
+        user=user
+        )
         return success_response(
          message="Registration successful.",
          data={
@@ -195,7 +208,7 @@ class SessionListAPIView(APIView):
 class SessionRevokeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    
+
     def delete(self, request, session_id):
         try:
             token = OutstandingToken.objects.get(
@@ -244,4 +257,73 @@ class SessionRevokeAPIView(APIView):
             message="Session revoked successfully.",
             data=None,
             status_code=status.HTTP_200_OK,
+        )
+
+
+class VerifyEmailAPIView(GenericAPIView):
+    """
+    Verify a user's email address using a secure,
+    single-use verification token.
+    """
+
+    serializer_class = VerifyEmailSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        user = EmailVerificationService.verify_token(
+            raw_token=serializer.validated_data["token"]
+        )
+
+        return success_response(
+            message="Email verified successfully.",
+            data={
+                "user_id": str(user.id),
+                "email": user.email,
+                "is_email_verified": user.is_email_verified,
+                "email_verified_at": user.email_verified_at,
+            },
+            status_code=status.HTTP_200_OK,
+        )
+
+class ResendVerificationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        if user.is_email_verified:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Email address is already verified.",
+                    "data": None,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Prevent rapid resend requests
+        EmailVerificationService.enforce_resend_cooldown(user)
+
+        # This service creates/rotates the token AND sends the email
+        VerificationEmailService.send_verification_email(
+            user=user,
+            invalidate_existing=True,
+        )
+
+        return Response(
+            {
+                "success": True,
+                "message": "Verification email sent successfully.",
+                "data": None,
+            },
+            status=status.HTTP_200_OK,
         )
