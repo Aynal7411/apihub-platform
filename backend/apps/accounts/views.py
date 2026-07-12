@@ -13,6 +13,10 @@ from .serializers.auth import RefreshTokenSerializer
 from apps.accounts.serializers.auth import LogoutSerializer
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.token_blacklist.models import (
+    OutstandingToken,
+    BlacklistedToken,
+)
 
 class RegistrationAPIView(GenericAPIView):
 
@@ -154,5 +158,90 @@ class LogoutAllAPIView(APIView):
             data={
                 "revoked_sessions": revoked_sessions,
             },
+            status_code=status.HTTP_200_OK,
+        )
+    
+
+class SessionListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tokens = (
+            OutstandingToken.objects
+            .filter(user=request.user)
+            .exclude(blacklistedtoken__isnull=False)
+            .order_by("-created_at")
+        )
+
+        sessions = [
+            {
+                "id": token.id,
+                "jti": token.jti,
+                "created_at": token.created_at,
+                "expires_at": token.expires_at,
+            }
+            for token in tokens
+        ]
+
+        return success_response(
+            message="Active sessions retrieved successfully.",
+             data={
+                "sessions": sessions,
+            },
+            status_code=status.HTTP_200_OK,
+        )
+
+
+class SessionRevokeAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    
+    def delete(self, request, session_id):
+        try:
+            token = OutstandingToken.objects.get(
+                id=session_id,
+                user=request.user,
+            )
+        except OutstandingToken.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Session not found.",
+                    "errors": None,
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        BlacklistedToken.objects.get_or_create(
+            token=token
+        )
+
+        return success_response(
+            message="Session revoked successfully.",
+            data={
+                "session_id": token.id,
+            },
+            status_code=status.HTTP_200_OK,
+        )
+    def post(self, request, session_id):
+        try:
+            token = OutstandingToken.objects.get(
+                id=session_id,
+                user=request.user,
+            )
+        except OutstandingToken.DoesNotExist:
+            return success_response(
+                message="Session not found.",
+                data=None,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        BlacklistedToken.objects.get_or_create(
+            token=token
+        )
+
+        return success_response(
+            message="Session revoked successfully.",
+            data=None,
             status_code=status.HTTP_200_OK,
         )

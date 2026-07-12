@@ -1,7 +1,8 @@
 from django.urls import path
 
 from .views import ( RegistrationAPIView, LoginAPIView, RefreshTokenAPIView, CurrentUserAPIView,LogoutAPIView,
-       LogoutAllAPIView,)
+       LogoutAllAPIView,SessionListAPIView,  SessionRevokeAPIView,)
+                                          
 app_name = "accounts"
 
 urlpatterns = [
@@ -40,6 +41,17 @@ urlpatterns = [
         name="logout-all",
     ),
 
+     # Sprint 3.2.7.10
+    path(
+        "auth/sessions/",
+        SessionListAPIView.as_view(),
+        name="sessions",
+    ),
+   path(
+    "auth/sessions/<int:session_id>/revoke/",
+    SessionRevokeAPIView.as_view(),
+    name="session-revoke",
+),
   
 
 ]
