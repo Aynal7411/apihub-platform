@@ -1,11 +1,11 @@
-from django.contrib.auth import get_user_model,aauthenticate
+from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
+from rest_framework import serializers,status
 from django.core.validators import RegexValidator
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
-
+from rest_framework.exceptions import APIException
 User = get_user_model()
 
 
@@ -101,8 +101,8 @@ class LoginSerializer(serializers.Serializer):
     
 
 
-from rest_framework import serializers, status
-from rest_framework.exceptions import APIException
+
+
 
 class InvalidRefreshToken(APIException):
     status_code = status.HTTP_401_UNAUTHORIZED
@@ -193,3 +193,21 @@ class PasswordResetRequestSerializer(
 ):
 
     email = serializers.EmailField()
+
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    token = serializers.CharField(
+        required=True,
+        allow_blank=False,
+    )
+
+    new_password = serializers.CharField(
+        required=True,
+        write_only=True,
+        allow_blank=False,
+    )
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value

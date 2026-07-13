@@ -81,40 +81,33 @@ class PasswordResetService:
 
     @staticmethod
     def send_reset_email(user, token):
-
         reset_url = (
-            f"{settings.FRONTEND_URL}"
-            f"/reset-password/"
-            f"?token={token.token}"
-        )
-
+          f"{settings.FRONTEND_URL}"
+          f"/reset-password/"
+          f"?token={token.token}"
+    )
 
         context = {
-            "user": user,
-            "reset_url": reset_url,
-        }
-
+          "user": user,
+          "reset_url": reset_url,
+    }
 
         html_body = render_to_string(
-            "accounts/emails/password_reset.html",
-            context
-        )
-
+          "accounts/emails/password_reset.html",
+          context,
+    )
 
         email = EmailMultiAlternatives(
-            subject="Password Reset Request",
-            body=(
-                "Reset your password using the link."
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email],
-        )
-
+           subject="Password Reset Request",
+           body="Reset your password using the link.",
+           from_email=settings.DEFAULT_FROM_EMAIL,
+           to=[user.email],
+    )
 
         email.attach_alternative(
-            html_body,
-            "text/html"
-        )
+           html_body,
+          "text/html",
+    )
 
+        email.send(fail_silently=False)
 
-        email.send()

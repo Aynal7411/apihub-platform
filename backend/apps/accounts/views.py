@@ -17,6 +17,12 @@ from apps.accounts.serializers.auth import VerifyEmailSerializer
 from apps.accounts.serializers.auth import (
     ResendVerificationSerializer,
 )
+from django.db import transaction
+
+from apps.accounts.tasks import (
+    send_verification_email_task,
+    send_password_reset_email_task,
+)
 from apps.accounts.services.verification_email_service import (
     VerificationEmailService,
 )
@@ -53,9 +59,7 @@ class RegistrationAPIView(GenericAPIView):
         user = AuthService.register_user(
             serializer.validated_data
         )
-        VerificationEmailService.send_verification_email(
-        user=user
-        )
+        
         return success_response(
          message="Registration successful.",
          data={
@@ -316,22 +320,24 @@ class ResendVerificationAPIView(APIView):
         # Prevent rapid resend requests
         EmailVerificationService.enforce_resend_cooldown(user)
 
-        # This service creates/rotates the token AND sends the email
-        VerificationEmailService.send_verification_email(
-            user=user,
-            invalidate_existing=True,
+        # Queue email only after the database transaction commits
+        transaction.on_commit(
+            lambda: send_verification_email_task.delay(
+                user.pk,
+                invalidate_existing=True,
+            )
         )
 
         return Response(
             {
                 "success": True,
-                "message": "Verification email sent successfully.",
+                "message": "Verification email has been queued.",
                 "data": None,
             },
             status=status.HTTP_200_OK,
         )
     
-from apps.accounts.serializers.auth import    PasswordResetRequestSerializer
+from apps.accounts.serializers.auth import  PasswordResetRequestSerializer
   
 
 
@@ -340,60 +346,39 @@ from apps.accounts.services.password_reset_service import (
 )
 
 class PasswordResetRequestView(APIView):
-
-    permission_classes = [
-        AllowAny
-    ]
-
+    permission_classes = [AllowAny]
 
     def post(self, request):
-
-        serializer = (
-            PasswordResetRequestSerializer(
-                data=request.data
-            )
+        serializer = PasswordResetRequestSerializer(
+            data=request.data
         )
+        serializer.is_valid(raise_exception=True)
 
-
-        serializer.is_valid(
-            raise_exception=True
-        )
-
-
-        email = serializer.validated_data[
-            "email"
-        ]
-
+        email = serializer.validated_data["email"]
 
         user = (
             User.objects
-            .filter(
-                email=email
-            )
+            .filter(email=email)
             .first()
         )
 
-
         # Enumeration protection
         if user:
+            token = PasswordResetService.create_token(user)
 
-            token = (
-                PasswordResetService
-                .create_token(user)
+            transaction.on_commit(
+                lambda: send_password_reset_email_task.delay(
+                    user.pk,
+                    token.pk,
+                )
             )
-
-
-            PasswordResetService.send_reset_email(
-                user,
-                token
-            )
-
 
         return Response(
             {
                 "success": True,
-                "message":
-                "If an account exists, "
-                "a password reset email has been sent."
+                "message": (
+                    "If an account exists, "
+                    "a password reset email has been sent."
+                ),
             }
         )

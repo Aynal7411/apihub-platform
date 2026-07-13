@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.common.exceptions import InvalidCredentials
 from rest_framework_simplejwt.exceptions import TokenError
 from apps.accounts.services.token_service import TokenService
+from apps.accounts.tasks import send_verification_email_task
 from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
     BlacklistedToken,
@@ -53,7 +54,9 @@ class AuthService:
             password=password,
             **validated_data,
         )
-
+        transaction.on_commit(
+        lambda: send_verification_email_task.delay(user.pk)
+    )
         return user
 
 
@@ -125,3 +128,33 @@ class AuthService:
                 revoked_sessions += 1
 
         return revoked_sessions  
+    
+    @staticmethod
+    @transaction.atomic
+    def reset_password(token, new_password):
+        reset_token = (
+        PasswordResetToken.objects
+        .select_for_update()
+        .filter(token=token)
+        .first()
+    )
+
+        if not reset_token:
+          return None
+
+        if reset_token.is_used():
+          return None
+
+        if reset_token.is_expired():
+          return None
+
+        user = reset_token.user
+
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        reset_token.mark_as_used()
+
+        return user
+    
+    
