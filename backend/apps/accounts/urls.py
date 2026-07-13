@@ -1,7 +1,9 @@
 from django.urls import path
 
 from .views import ( RegistrationAPIView, LoginAPIView, RefreshTokenAPIView, CurrentUserAPIView,LogoutAPIView,
-       LogoutAllAPIView,SessionListAPIView,  SessionRevokeAPIView,VerifyEmailAPIView,ResendVerificationAPIView,)
+       LogoutAllAPIView,SessionListAPIView,  SessionRevokeAPIView,VerifyEmailAPIView,ResendVerificationAPIView,
+       PasswordResetRequestView,
+       )
                                           
 app_name = "accounts"
 
@@ -65,5 +67,11 @@ urlpatterns = [
     ResendVerificationAPIView.as_view(),
     name="resend-email-verification",
 ),
+
+path(
+        "password-reset/request/",
+        PasswordResetRequestView.as_view(),
+        name="password-reset-request"
+    ),
 
 ]

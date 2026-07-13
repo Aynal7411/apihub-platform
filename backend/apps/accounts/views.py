@@ -7,6 +7,7 @@ from .serializers.auth import RegistrationSerializer
 from .services.auth_service import AuthService
 from apps.common.utils import success_response
 from.serializers.auth import UserSerializer
+from django.contrib.auth import get_user_model
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -28,6 +29,8 @@ from rest_framework_simplejwt.token_blacklist.models import (
 from apps.accounts.services.email_verification_service import (
     EmailVerificationService,
 )
+
+User = get_user_model()
 
 class RegistrationAPIView(GenericAPIView):
 
@@ -326,4 +329,71 @@ class ResendVerificationAPIView(APIView):
                 "data": None,
             },
             status=status.HTTP_200_OK,
+        )
+    
+from apps.accounts.serializers.auth import    PasswordResetRequestSerializer
+  
+
+
+from apps.accounts.services.password_reset_service import (
+    PasswordResetService
+)
+
+class PasswordResetRequestView(APIView):
+
+    permission_classes = [
+        AllowAny
+    ]
+
+
+    def post(self, request):
+
+        serializer = (
+            PasswordResetRequestSerializer(
+                data=request.data
+            )
+        )
+
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+
+        email = serializer.validated_data[
+            "email"
+        ]
+
+
+        user = (
+            User.objects
+            .filter(
+                email=email
+            )
+            .first()
+        )
+
+
+        # Enumeration protection
+        if user:
+
+            token = (
+                PasswordResetService
+                .create_token(user)
+            )
+
+
+            PasswordResetService.send_reset_email(
+                user,
+                token
+            )
+
+
+        return Response(
+            {
+                "success": True,
+                "message":
+                "If an account exists, "
+                "a password reset email has been sent."
+            }
         )

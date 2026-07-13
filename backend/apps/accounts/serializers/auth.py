@@ -188,3 +188,8 @@ class ResendVerificationSerializer(serializers.Serializer):
     """
 
     pass       
+class PasswordResetRequestSerializer(
+    serializers.Serializer
+):
+
+    email = serializers.EmailField()

@@ -1,8 +1,10 @@
 import secrets
 
 from datetime import timedelta
-
+from django.conf import settings
 from django.utils import timezone
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
 from apps.accounts.models import PasswordResetToken
 
@@ -75,3 +77,44 @@ class PasswordResetService:
 
 
         return reset_token
+    
+
+    @staticmethod
+    def send_reset_email(user, token):
+
+        reset_url = (
+            f"{settings.FRONTEND_URL}"
+            f"/reset-password/"
+            f"?token={token.token}"
+        )
+
+
+        context = {
+            "user": user,
+            "reset_url": reset_url,
+        }
+
+
+        html_body = render_to_string(
+            "accounts/emails/password_reset.html",
+            context
+        )
+
+
+        email = EmailMultiAlternatives(
+            subject="Password Reset Request",
+            body=(
+                "Reset your password using the link."
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email],
+        )
+
+
+        email.attach_alternative(
+            html_body,
+            "text/html"
+        )
+
+
+        email.send()
