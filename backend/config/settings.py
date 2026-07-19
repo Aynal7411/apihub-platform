@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.common",
     "apps.organizations",
+    "apps.apis",
 
 ]
 
