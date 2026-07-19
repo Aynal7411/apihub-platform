@@ -106,7 +106,7 @@ class APIService:
 
         return api
     
-     @staticmethod
+    @staticmethod
     @transaction.atomic
     def soft_delete_api(
         *,

@@ -29,3 +29,8 @@ class APIAdmin(admin.ModelAdmin):
     prepopulated_fields = {
         "slug": ("name",)
     }
+
+
+from .models import API, APIVersion
+
+admin.site.register(APIVersion)   

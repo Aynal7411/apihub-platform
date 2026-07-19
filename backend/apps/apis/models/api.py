@@ -95,13 +95,14 @@ class API(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     deleted_at = models.DateTimeField(
-    null=True,
-    blank=True,
+     null=True,
+     blank=True,
 )
 
     deleted_by = models.ForeignKey(
      settings.AUTH_USER_MODEL,
      blank=True,
+     null=True,
      on_delete=models.SET_NULL,
      related_name="deleted_apis",
     )
